@@ -22,6 +22,7 @@ interface DownloadLinksModalProps {
   loading: boolean
   error: string | null
   downloads: DownloadLink[]
+  images: string[]
   onClose: () => void
 }
 
@@ -31,6 +32,7 @@ export function DownloadLinksModal({
   loading,
   error,
   downloads,
+  images,
   onClose,
 }: DownloadLinksModalProps) {
   if (!open) return null
@@ -84,8 +86,28 @@ export function DownloadLinksModal({
             </div>
           )}
 
-          {!loading && !error && downloads.length === 0 && (
+          {!loading && !error && images.length > 0 && (
+            <div className="mb-4 flex gap-3 overflow-x-auto pb-1">
+              {images.map((src) => (
+                <img
+                  key={src}
+                  src={src}
+                  alt={title}
+                  className="h-52 w-auto shrink-0 rounded-lg border object-cover shadow-sm"
+                  loading="lazy"
+                />
+              ))}
+            </div>
+          )}
+
+          {!loading && !error && downloads.length === 0 && images.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">
+              No download links were found on this page.
+            </p>
+          )}
+
+          {!loading && !error && downloads.length === 0 && images.length > 0 && (
+            <p className="pb-4 text-center text-sm text-muted-foreground">
               No download links were found on this page.
             </p>
           )}

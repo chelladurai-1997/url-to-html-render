@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { extractDownloadLinks, type DownloadLink } from "@/lib/extract-downloads"
+import { extractMovieImages } from "@/lib/extract-movie-images"
 import { extractMovies, buildHtmlBody, type MovieLink } from "@/lib/extract-topics"
 import { filterMovies, getAvailableYears } from "@/lib/movie-filters"
 import { Check, Copy, Link2, Loader2, Film, Search } from "lucide-react"
@@ -24,6 +25,7 @@ export default function Page() {
   const [modalError, setModalError] = useState<string | null>(null)
   const [modalTitle, setModalTitle] = useState("")
   const [downloads, setDownloads] = useState<DownloadLink[]>([])
+  const [modalImages, setModalImages] = useState<string[]>([])
   const [search, setSearch] = useState("")
   const [yearFilter, setYearFilter] = useState("")
 
@@ -76,6 +78,7 @@ export default function Page() {
     setModalError(null)
     setModalTitle(movie.title)
     setDownloads([])
+    setModalImages([])
     try {
       const res = await fetch("/api/fetch-html", {
         method: "POST",
@@ -87,9 +90,11 @@ export default function Page() {
         throw new Error(data.error || "Something went wrong.")
       }
       setDownloads(extractDownloadLinks(data.html as string))
+      setModalImages(extractMovieImages(data.html as string))
     } catch (err) {
       setModalError(err instanceof Error ? err.message : "Something went wrong.")
       setDownloads([])
+      setModalImages([])
     } finally {
       setModalLoading(false)
     }
@@ -100,6 +105,7 @@ export default function Page() {
     setModalLoading(false)
     setModalError(null)
     setDownloads([])
+    setModalImages([])
   }
 
   return (
@@ -248,6 +254,7 @@ export default function Page() {
         loading={modalLoading}
         error={modalError}
         downloads={downloads}
+        images={modalImages}
         onClose={closeModal}
       />
     </main>
