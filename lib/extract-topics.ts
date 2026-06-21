@@ -101,3 +101,9 @@ export function buildHtmlBody(movies: MovieLink[]): string {
     .join("\n")
   return `<ul>\n${items}\n</ul>`
 }
+
+export function buildMovieNamesCopyText(movies: MovieLink[]): string {
+  if (movies.length === 0) return ""
+  const names = movies.map((m, i) => `${i + 1}. ${m.title}`).join("\n")
+  return `Order the following movies by IMDB rating (highest to lowest):\n\n${names}`
+}

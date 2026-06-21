@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { extractDownloadLinks, type DownloadLink } from "@/lib/extract-downloads"
 import { extractMovieImages } from "@/lib/extract-movie-images"
-import { extractMovies, buildHtmlBody, type MovieLink } from "@/lib/extract-topics"
+import { extractMovies, buildMovieNamesCopyText, type MovieLink } from "@/lib/extract-topics"
 import { filterMovies, getAvailableYears } from "@/lib/movie-filters"
 import { Check, Copy, Link2, Loader2, Film, Search } from "lucide-react"
 
@@ -17,7 +17,6 @@ export default function Page() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [movies, setMovies] = useState<MovieLink[]>([])
-  const [htmlBody, setHtmlBody] = useState("")
   const [copied, setCopied] = useState(false)
   const [hasRun, setHasRun] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
@@ -55,19 +54,17 @@ export default function Page() {
       }
       const found = extractMovies(data.html as string)
       setMovies(found)
-      setHtmlBody(buildHtmlBody(found))
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.")
       setMovies([])
-      setHtmlBody("")
     } finally {
       setLoading(false)
     }
   }
 
   async function handleCopy() {
-    if (!htmlBody) return
-    await navigator.clipboard.writeText(htmlBody)
+    if (filteredMovies.length === 0) return
+    await navigator.clipboard.writeText(buildMovieNamesCopyText(filteredMovies))
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -117,7 +114,7 @@ export default function Page() {
         </h1>
         <p className="text-pretty leading-relaxed text-muted-foreground">
           Fetch a page and capture every movie URL, listing each one as a clickable link with its
-          name derived from the slug. Copy the generated HTML body to reuse anywhere.
+          name derived from the slug. Copy movie names with an IMDB rating sort prompt.
         </p>
       </header>
 
@@ -181,7 +178,12 @@ export default function Page() {
                   : `${filteredMovies.length} of ${movies.length}`}
               </span>
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={handleCopy}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopy}
+              disabled={filteredMovies.length === 0}
+            >
               {copied ? (
                 <>
                   <Check className="size-4" />
@@ -190,7 +192,7 @@ export default function Page() {
               ) : (
                 <>
                   <Copy className="size-4" />
-                  Copy HTML
+                  Copy Names
                 </>
               )}
             </Button>

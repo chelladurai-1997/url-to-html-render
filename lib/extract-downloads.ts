@@ -1,9 +1,15 @@
-export type DownloadLinkType = "torrent" | "magnet" | "direct"
+export type DownloadLinkType = "torrent" | "magnet"
 
 export interface DownloadLink {
   url: string
   label: string
   type: DownloadLinkType
+}
+
+export interface DownloadGroup {
+  size: string
+  torrent: DownloadLink | null
+  magnet: DownloadLink | null
 }
 
 const ANCHOR_REGEX = /<a\b([^>]*)>([\s\S]*?)<\/a>/gi
@@ -52,14 +58,6 @@ function classifyAnchor(
     }
   }
 
-  if (classes.includes("download-button")) {
-    return {
-      url: href,
-      label: text || "Direct link",
-      type: "direct",
-    }
-  }
-
   return null
 }
 
@@ -83,4 +81,50 @@ export function extractDownloadLinks(html: string): DownloadLink[] {
   }
 
   return results
+}
+
+export function extractFileSize(torrentLabel: string): string {
+  const cleaned = torrentLabel.replace(/\.torrent$/i, "").replace(/\.mkv$/i, "")
+
+  const esubMatch = cleaned.match(/- (\d+(?:\.\d+)?)\s*(GB|MB|KB)\s*-?\s*ESub/i)
+  if (esubMatch) return `${esubMatch[1]}${esubMatch[2].toUpperCase()}`
+
+  const matches = [...cleaned.matchAll(/(\d+(?:\.\d+)?)\s*(GB|MB|KB)\b/gi)]
+  if (matches.length === 0) return "Unknown size"
+
+  const last = matches[matches.length - 1]
+  return `${last[1]}${last[2].toUpperCase()}`
+}
+
+export function groupDownloadLinks(links: DownloadLink[]): DownloadGroup[] {
+  const groups: DownloadGroup[] = []
+  let current: DownloadGroup | null = null
+
+  for (const link of links) {
+    if (link.type === "torrent") {
+      current = {
+        size: extractFileSize(link.label),
+        torrent: link,
+        magnet: null,
+      }
+      groups.push(current)
+      continue
+    }
+
+    if (!current) {
+      current = {
+        size: "Unknown size",
+        torrent: null,
+        magnet: link.type === "magnet" ? link : null,
+      }
+      groups.push(current)
+      continue
+    }
+
+    if (link.type === "magnet" && !current.magnet) {
+      current.magnet = link
+    }
+  }
+
+  return groups
 }

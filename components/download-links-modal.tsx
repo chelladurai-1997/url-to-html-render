@@ -1,19 +1,18 @@
 "use client"
 
+import { useMemo } from "react"
 import { Button } from "@/components/ui/button"
-import type { DownloadLink } from "@/lib/extract-downloads"
+import { groupDownloadLinks, type DownloadLink } from "@/lib/extract-downloads"
 import { Download, Loader2, Magnet, X } from "lucide-react"
 
 const typeLabels = {
   torrent: "Torrent",
   magnet: "Magnet",
-  direct: "Direct",
 } as const
 
 const typeIcons = {
   torrent: Download,
   magnet: Magnet,
-  direct: Download,
 } as const
 
 interface DownloadLinksModalProps {
@@ -26,6 +25,26 @@ interface DownloadLinksModalProps {
   onClose: () => void
 }
 
+function DownloadRow({ link }: { link: DownloadLink }) {
+  const Icon = typeIcons[link.type]
+  return (
+    <li className="flex items-center gap-3">
+      <span className="inline-flex w-16 shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+        <Icon className="size-3" />
+        {typeLabels[link.type]}
+      </span>
+      <a
+        href={link.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="min-w-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
+      >
+        {link.label}
+      </a>
+    </li>
+  )
+}
+
 export function DownloadLinksModal({
   open,
   title,
@@ -35,6 +54,8 @@ export function DownloadLinksModal({
   images,
   onClose,
 }: DownloadLinksModalProps) {
+  const groups = useMemo(() => groupDownloadLinks(downloads), [downloads])
+
   if (!open) return null
 
   return (
@@ -100,40 +121,33 @@ export function DownloadLinksModal({
             </div>
           )}
 
-          {!loading && !error && downloads.length === 0 && images.length === 0 && (
+          {!loading && !error && groups.length === 0 && images.length === 0 && (
             <p className="py-10 text-center text-sm text-muted-foreground">
               No download links were found on this page.
             </p>
           )}
 
-          {!loading && !error && downloads.length === 0 && images.length > 0 && (
+          {!loading && !error && groups.length === 0 && images.length > 0 && (
             <p className="pb-4 text-center text-sm text-muted-foreground">
               No download links were found on this page.
             </p>
           )}
 
-          {!loading && !error && downloads.length > 0 && (
-            <ul className="flex flex-col divide-y">
-              {downloads.map((link) => {
-                const Icon = typeIcons[link.type]
-                return (
-                  <li key={`${link.type}-${link.url}`} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                      <Icon className="size-3" />
-                      {typeLabels[link.type]}
-                    </span>
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="min-w-0 text-sm font-medium text-primary underline-offset-4 hover:underline"
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                )
-              })}
-            </ul>
+          {!loading && !error && groups.length > 0 && (
+            <div className="flex flex-col gap-4">
+              {groups.map((group, index) => (
+                <div
+                  key={`${group.size}-${group.torrent?.url ?? index}`}
+                  className="rounded-lg border bg-muted/30 p-4"
+                >
+                  <h3 className="mb-3 text-sm font-semibold tracking-tight">{group.size}</h3>
+                  <ul className="flex flex-col gap-2.5">
+                    {group.torrent && <DownloadRow link={group.torrent} />}
+                    {group.magnet && <DownloadRow link={group.magnet} />}
+                  </ul>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
