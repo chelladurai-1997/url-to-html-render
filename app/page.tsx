@@ -25,7 +25,7 @@ export default function Page() {
   const [modalTitle, setModalTitle] = useState("")
   const [downloads, setDownloads] = useState<DownloadLink[]>([])
   const [modalImages, setModalImages] = useState<string[]>([])
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState("Tamil true")
   const [yearFilter, setYearFilter] = useState("")
 
   const availableYears = useMemo(() => getAvailableYears(movies), [movies])
